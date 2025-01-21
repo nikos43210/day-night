@@ -1,0 +1,74 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = playerGui
+
+-- Function to create draggable buttons
+local function createButton(name, text, position)
+    local button = Instance.new("TextButton")
+    button.Name = name
+    button.Text = text
+    button.Size = UDim2.new(0, 200, 0, 50)
+    button.Position = position
+    button.BackgroundColor3 = Color3.new(1, 1, 1)
+    button.BorderColor3 = Color3.new(0, 0, 0)
+    button.Parent = screenGui
+
+    local dragging = false
+    local dragInput, mousePos, framePos
+
+    button.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            mousePos = input.Position
+            framePos = button.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    button.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    button.InputEnded:Connect(function(input)
+        if input == dragInput then
+            dragging = false
+        end
+    end)
+
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and input == dragInput then
+            local delta = input.Position - mousePos
+            button.Position = UDim2.new(
+                framePos.X.Scale,
+                framePos.X.Offset + delta.X,
+                framePos.Y.Scale,
+                framePos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    return button
+end
+
+-- Create daytime button
+local dayButton = createButton("DayButton", "Day", UDim2.new(0, 50, 0, 50))
+dayButton.MouseButton1Click:Connect(function()
+    game.Lighting.TimeOfDay = "14:00:00"
+end)
+
+-- Create nighttime button
+local nightButton = createButton("NightButton", "Night", UDim2.new(0, 50, 0, 120))
+nightButton.MouseButton1Click:Connect(function()
+    game.Lighting.TimeOfDay = "00:00:00"
+end)
